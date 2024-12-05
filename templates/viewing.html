@@ -10,6 +10,7 @@
         
         body {
             background-color: #333; 
+            overflow: hidden; 
         }
 
         .container {
@@ -20,7 +21,7 @@
         .image-container {
             position: relative;
             width: 100%;
-            padding-top: 80%;
+            padding-top: 70%;
             overflow: hidden;
             border-radius: 10px;
             box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.1); 
@@ -44,7 +45,6 @@
             justify-content: space-between; 
             align-items: center; 
         }
-
         .arrow-btn {
             cursor: pointer;
             font-size: 24px;
@@ -78,9 +78,11 @@
 <body class="bg-gray-300 font-sans">
 
     <div class="container mx-auto px-4 py-8 bg-gray-300">
-        <a href="javascript:history.go(-1)" class="arrow-btn">&#10094; Back</a>
-        <h2 class="text-3xl font-bold mb-4 text-center">{{room_name}}</h2>
-        <br>
+
+        <div class="flex items-center justify-between mb-4">
+            <a href="javascript:history.go(-1)" class="arrow-btn">&#10094; Back</a>
+            <h2 class="text-3xl font-bold text-center flex-1">{{ room_name }}</h2>
+        </div>
 
         {% for image_filename in image_filenames %}
         <div class="image-container">
