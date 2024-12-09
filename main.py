@@ -4,6 +4,7 @@ from flask import Flask, render_template,session, request, redirect, url_for, fl
 from werkzeug.security import generate_password_hash, check_password_hash
 from home import home_blueprint, room_gallery, get_db
 from admin import admin_blueprint,admin_home
+# from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 
 import sqlite3
 
@@ -29,6 +30,7 @@ def index():
 
 # Route for user login functionality
 @app.route('/login', methods=['GET', 'POST'])
+# @login_required
 def login():
 
     conn = sqlite3.connect('assignmentdb.db')
@@ -51,7 +53,6 @@ def login():
                         session['email'] = emailaddress
                         session['username'] = result[0]
                         session['name'] = result[2]
-
                         session['user_type'] = 'regular'
                         session['logged_in'] = True
                         return redirect(url_for('home.room_gallery'))

@@ -14,126 +14,142 @@ admin_blueprint = Blueprint('admin', __name__)
 # Route for displaying all bookings to admin
 @admin_blueprint.route('/admin/bookings', methods=['GET', 'POST'])
 def bookings():
-    db, cursor = get_db()
-    today = datetime.now()
-    today_str = datetime.now().strftime('%d/%m/%Y')
+    if session.get('user_type') == 'admin':
+        db, cursor = get_db()
+        today = datetime.now()
+        today_str = datetime.now().strftime('%d/%m/%Y')
 
-    cursor.execute("SELECT * FROM booking ORDER BY date DESC")
-    current_bookings = cursor.fetchall()
-    return render_template('admin_booking.html', bookings=current_bookings)
+        cursor.execute("SELECT * FROM booking ORDER BY date DESC")
+        current_bookings = cursor.fetchall()
+        return render_template('admin_booking.html', bookings=current_bookings)
+    else:
+        return render_template('not_authorised.html')
 
 # Route for admin homepage
 @admin_blueprint.route('/adminpage', methods=['GET', 'POST'])
 def admin_home():
-    db, cursor = get_db()
-    today = datetime.now().date()
-    monday_date = today - timedelta(days=today.weekday())
-    friday_date = monday_date + timedelta(days=11)
-    today_str = today.strftime('%d/%m/%Y')
-    friday_str = friday_date.strftime('%d/%m/%Y')
-    cursor.execute("SELECT * FROM booking")
-    bookings_display = cursor.fetchall()
+    if session.get('user_type') == 'admin':
+        db, cursor = get_db()
+        today = datetime.now().date()
+        monday_date = today - timedelta(days=today.weekday())
+        friday_date = monday_date + timedelta(days=11)
+        today_str = today.strftime('%d/%m/%Y')
+        friday_str = friday_date.strftime('%d/%m/%Y')
+        cursor.execute("SELECT * FROM booking")
+        bookings_display = cursor.fetchall()
 
-    filtered_bookings = []
+        filtered_bookings = []
 
-    for booking in bookings_display:
-        booking_date = datetime.strptime(booking[3], '%d/%m/%Y').date()
-        if today <= booking_date < friday_date and booking[7] == 'Booked':
-            filtered_bookings.append(booking)
-    bookings_display = filtered_bookings
+        for booking in bookings_display:
+            booking_date = datetime.strptime(booking[3], '%d/%m/%Y').date()
+            if today <= booking_date < friday_date and booking[7] == 'Booked':
+                filtered_bookings.append(booking)
+        bookings_display = filtered_bookings
 
-    cursor.execute("SELECT * FROM booking")
-    bookings = cursor.fetchall()
+        cursor.execute("SELECT * FROM booking")
+        bookings = cursor.fetchall()
 
-    df = pd.DataFrame(bookings, columns=['id', 'room_name', 'user', 'date', 'time', 'attendance', 'equipment', 'status'])
+        df = pd.DataFrame(bookings, columns=['id', 'room_name', 'user', 'date', 'time', 'attendance', 'equipment', 'status'])
 
-    df['date'] = pd.to_datetime(df['date'], format='%d/%m/%Y')
-    df['month'] = df['date'].dt.month
+        df['date'] = pd.to_datetime(df['date'], format='%d/%m/%Y')
+        df['month'] = df['date'].dt.month
 
-    bookings_per_month = df.groupby('month').size()
-    bookings_per_month_dict = bookings_per_month.to_dict()
+        bookings_per_month = df.groupby('month').size()
+        bookings_per_month_dict = bookings_per_month.to_dict()
 
-    rooms_distribution = df['room_name'].value_counts().to_dict()
-    
-    bookings_per_month = json.dumps(bookings_per_month_dict)
-    rooms_distribution = json.dumps(rooms_distribution)
+        rooms_distribution = df['room_name'].value_counts().to_dict()
+        
+        bookings_per_month = json.dumps(bookings_per_month_dict)
+        rooms_distribution = json.dumps(rooms_distribution)
 
-    return render_template('admin.html', bookings=bookings_display, bookings_per_month=bookings_per_month, rooms_distribution= rooms_distribution)
+        return render_template('admin.html', bookings=bookings_display, bookings_per_month=bookings_per_month, rooms_distribution= rooms_distribution)
+    else:
+        return render_template('not_authorised.html')
 
 
 # Route for viewing rooms by admin
 @admin_blueprint.route('/admin/view_rooms', methods=['GET', 'POST'])
 def view_rooms():
-    db, cursor = get_db()
-    cursor.execute("SELECT * FROM rooms")
-    rooms = cursor.fetchall()
-    updated_rooms = []
-    user_type = session.get('user_type')
-    imagesFolder = 'static/images/'
-    
-    folder_dict = {}
-    
-    for folder_name in os.listdir(imagesFolder):
-        folder_path = os.path.join(imagesFolder, folder_name)
-        if os.path.isdir(folder_path):
-            file_names = os.listdir(folder_path)
-            folder_dict[folder_name] = file_names
-    
-    for room in rooms:
-        image_blob = room[4]
-        encoded_image = base64.b64encode(image_blob).decode('utf-8')
-        updated_room = list(room) + [encoded_image]
-        updated_rooms.append(updated_room)
-    
-    folder_dict_json = json.dumps(folder_dict)
-    return render_template('gallery.html', rooms=updated_rooms, user_type=user_type, folder_dict=folder_dict_json)
+    if session.get('user_type') == 'admin':
+        db, cursor = get_db()
+        cursor.execute("SELECT * FROM rooms")
+        rooms = cursor.fetchall()
+        updated_rooms = []
+        user_type = session.get('user_type')
+        imagesFolder = 'static/images/'
+        
+        folder_dict = {}
+        
+        for folder_name in os.listdir(imagesFolder):
+            folder_path = os.path.join(imagesFolder, folder_name)
+            if os.path.isdir(folder_path):
+                file_names = os.listdir(folder_path)
+                folder_dict[folder_name] = file_names
+        
+        for room in rooms:
+            image_blob = room[4]
+            encoded_image = base64.b64encode(image_blob).decode('utf-8')
+            updated_room = list(room) + [encoded_image]
+            updated_rooms.append(updated_room)
+        
+        folder_dict_json = json.dumps(folder_dict)
+        return render_template('gallery.html', rooms=updated_rooms, user_type=user_type, folder_dict=folder_dict_json)
+    else:
+        return render_template('not_authorised.html')
 
 # Route for adding rooms by admin
 @admin_blueprint.route('/admin/add_rooms', methods=['GET', 'POST'])
 def add_rooms():
-    db, cursor = get_db()
-    room_name = request.form['room_name']
-    building = request.form['building']
-    occupancy = request.form['occupancy']
-    available = request.form.get('available', 'No')
-    if available == 'on':
-        available = 'Yes'
-    video_conferencing = request.form.get('video_conferencing', 'No')
-    if video_conferencing == 'on':
-        video_conferencing = 'Yes'
-    image_file = request.files['images']
-    image_data = image_file.read()
-    slideshow_images = request.files.getlist('slideshow_images')
-    UPLOAD_FOLDER = 'static/images/'+str(room_name)
+    if session.get('user_type') == 'admin':
+        db, cursor = get_db()
+        room_name = request.form['room_name']
+        building = request.form['building']
+        occupancy = request.form['occupancy']
+        available = request.form.get('available', 'No')
+        if available == 'on':
+            available = 'Yes'
+        video_conferencing = request.form.get('video_conferencing', 'No')
+        if video_conferencing == 'on':
+            video_conferencing = 'Yes'
+        image_file = request.files['images']
+        image_data = image_file.read()
+        slideshow_images = request.files.getlist('slideshow_images')
+        UPLOAD_FOLDER = 'static/images/'+str(room_name)
 
-    try:
-        os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-        for slideshow_image in slideshow_images:
-                slideshow_image_filename = secure_filename(slideshow_image.filename)
-                slideshow_image.save(os.path.join(UPLOAD_FOLDER, slideshow_image_filename))
-        cursor.execute("""
-            INSERT INTO rooms (Name,Building, Seats, Images, Available, Video_Conferencing)
-            VALUES (?, ?, ?, ?,?,?)
-        """, (room_name, building, occupancy, sqlite3.Binary(image_data), available, video_conferencing))
-        db.commit()
-        current_app.logger.info('Room added')
-        room_add = 'true'
-        return render_template('gallery.html', room_add=room_add)
-    
-    except:
-        room_add  = 'false'
-        return redirect(url_for('admin.view_rooms',room_add = room_add))
+        try:
+            os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+            for slideshow_image in slideshow_images:
+                    slideshow_image_filename = secure_filename(slideshow_image.filename)
+                    slideshow_image.save(os.path.join(UPLOAD_FOLDER, slideshow_image_filename))
+            cursor.execute("""
+                INSERT INTO rooms (Name,Building, Seats, Images, Available, Video_Conferencing)
+                VALUES (?, ?, ?, ?,?,?)
+            """, (room_name, building, occupancy, sqlite3.Binary(image_data), available, video_conferencing))
+            db.commit()
+            current_app.logger.info('Room added')
+            room_add = 'true'
+            return render_template('gallery.html', room_add=room_add)
+        
+        except:
+            room_add  = 'false'
+            return redirect(url_for('admin.view_rooms',room_add = room_add))
+    else:
+        return render_template('not_authorised.html')
 
 # Route for deleting rooms by admin    
 @admin_blueprint.route('/admin/delete_room', methods=['GET', 'POST'])
 def delete_room():
-    room_name = request.args.get('room_name')
-    delete_folder = 'static/images/'+str(room_name)
-    db, cursor = get_db()
-    cursor.execute("DELETE FROM rooms WHERE Name=?", (room_name,))
-    db.commit()
-    shutil.rmtree(delete_folder)
-    return 'Room deleted successfully!'
+    try:
+        room_name = request.args.get('room_name')
+        delete_folder = 'static/images/'+str(room_name)
+        db, cursor = get_db()
+        cursor.execute("DELETE FROM rooms WHERE Name=?", (room_name,))
+        db.commit()
+        shutil.rmtree(delete_folder)
+        return 'Room deleted successfully!'
+    except:
+        return 'Unable to delete room'
+    
 
 # Route for updating rooms by admin
 @admin_blueprint.route('/admin/update_room', methods=['GET', 'POST'])
@@ -158,34 +174,39 @@ def update_room():
         elif main_image != 'undefined':
             cursor.execute("UPDATE rooms Building = ?, Seats = ?, Images = ?, Available = ?, Video_Conferencing = ? WHERE Name = ?", (building, occupancy, sqlite3.Binary(image_data),availability,video_conferencing, room_name))
             db.commit()
-        return 'Room updated successfully!'
+        
+        return render_template('message.html', message='Room updated successfully!')
     
     except:
-        current_app.logger.info('Couldnt update')
-        return 'Could update room'
+        return render_template('message.html', message='Couldnt update the room')
 
 # Route for deleting a user by admin  
 @admin_blueprint.route('/delete_user', methods=['GET', 'POST'])
 def delete_user():
-    userID = request.form.get('userid')
-    user_type = request.form.get('user_type')
-    db, cursor = get_db()
-    if user_type == 'user':
-        cursor.execute("""
-                UPDATE user
-                SET status = 'Inactive'
-                WHERE userID = ?
-            """, (userID,))
-        db.commit()
+    try:
+        userID = request.form.get('userid')
+        user_type = request.form.get('user_type')
+        db, cursor = get_db()
+        if user_type == 'user':
+            cursor.execute("""
+                    UPDATE user
+                    SET status = 'Inactive'
+                    WHERE userID = ?
+                """, (userID,))
+            db.commit()
 
-    elif user_type == 'admin':
-        cursor.execute("""
-                UPDATE admin
-                SET status = 'Inactive'
-                WHERE adminID = ?
-            """, (userID,))
-        db.commit()
-    return 'User deleted successfully!'
+        elif user_type == 'admin':
+            cursor.execute("""
+                    UPDATE admin
+                    SET status = 'Inactive'
+                    WHERE adminID = ?
+                """, (userID,))
+            db.commit()
+        return render_template('message.html', message='User deleted successfully!')
+    except:
+        return render_template('message.html', message="Couldn't delete the user")
+
+    
 
 # Route for updating a user by admin
 @admin_blueprint.route('/admin/update_user', methods=['GET', 'POST'])
@@ -211,10 +232,9 @@ def update_user():
                     WHERE adminID = ?
                 """.format(usertype), (name, email, status, user_id,))
             db.commit()
-
-        return 'User update successfully!'
+        return render_template('message.html', message='User updated successfully!')
     except:
-        return 'Couldnt update successfully!'
+        return render_template('message.html', message="Couldn't update the user")
 
 
 # Route for changing a user to admin by admin

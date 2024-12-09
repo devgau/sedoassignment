@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alert Message</title>
+    <script>
+        window.onload = function() {
+            var message = "{{ message }}";  
+            alert(message); 
+            window.location.href = "{{ url_for('login') }}";   
+        }
+    </script>
+</head>
+</html>

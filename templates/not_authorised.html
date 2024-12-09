@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Not Authorized</title>
+    <meta http-equiv="refresh" content="0; url={{ url_for('login') }}">
+    <script>
+        window.onload = function() {
+            alert('You are not authorized to access this page.\nYou will be redirected to the login page shortly.');
+        }
+    </script>
+</head>
+</html>
