@@ -27,33 +27,40 @@ def close_db(error):
 # Route for displaying room gallery
 @home_blueprint.route('/gallery', methods=['GET', 'POST'])
 def room_gallery():
-    db,cursor = get_db()
-    username = session.get('username')
+    
+    if session.get('user_type') == 'regular':
+        db,cursor = get_db()
+        username = session.get('username')
 
-    cursor.execute("SELECT * FROM rooms")
-    rooms = cursor.fetchall()
-    updated_rooms = []
-    user_type = session.get('user_type')
-    for room in rooms:
-        image_blob = room[4]
-        encoded_image = base64.b64encode(image_blob).decode('utf-8')
-        updated_room = list(room) + [encoded_image]
-        updated_rooms.append(updated_room)
+        cursor.execute("SELECT * FROM rooms")
+        rooms = cursor.fetchall()
+        updated_rooms = []
+        user_type = session.get('user_type')
+        for room in rooms:
+            image_blob = room[4]
+            encoded_image = base64.b64encode(image_blob).decode('utf-8')
+            updated_room = list(room) + [encoded_image]
+            updated_rooms.append(updated_room)
 
-    image_folder = os.path.join(current_app.root_path, 'static') + '/images/'
-    image_filenames = [f for f in os.listdir(image_folder) if f.endswith(('.png', '.jpg', '.jpeg'))]
+        image_folder = os.path.join(current_app.root_path, 'static') + '/images/'
+        image_filenames = [f for f in os.listdir(image_folder) if f.endswith(('.png', '.jpg', '.jpeg'))]
 
-    return render_template('gallery.html', rooms=updated_rooms, username=username, user_type=user_type, image_filenames=image_filenames, image_folder=image_folder)
+        return render_template('gallery.html', rooms=updated_rooms, username=username, user_type=user_type, image_filenames=image_filenames, image_folder=image_folder)
+    else:
+        return render_template('not_authorised.html')
  
 # Route for viewing individual rooms
 @home_blueprint.route('/rooms/<room_name>', methods=['GET', 'POST'])
 def viewing_rooms(room_name):
-    user_type = request.args.get('user_type')
-    image_folder = os.path.join(current_app.root_path, 'static')+'/images/' +str(room_name)
-    image_filenames = [f for f in os.listdir(image_folder) if f.endswith(('.png', '.jpg', '.jpeg'))]
-    slide_range = range(1, len(image_filenames) + 1)
-    return render_template('viewing.html', image_filenames=image_filenames,image_folder=image_folder, room_name = room_name, slide_range=slide_range, user_type = user_type)
-
+    if session.get('user_type') == 'regular':
+        user_type = request.args.get('user_type')
+        image_folder = os.path.join(current_app.root_path, 'static')+'/images/' +str(room_name)
+        image_filenames = [f for f in os.listdir(image_folder) if f.endswith(('.png', '.jpg', '.jpeg'))]
+        slide_range = range(1, len(image_filenames) + 1)
+        return render_template('viewing.html', image_filenames=image_filenames,image_folder=image_folder, room_name = room_name, slide_range=slide_range, user_type = user_type)
+    else:
+        return render_template('not_authorised.html')
+ 
 
 # Route for submitting room booking
 @home_blueprint.route('/book_room', methods=['POST'])
@@ -86,17 +93,23 @@ def submit_room():
 # Route for displaying user bookings
 @home_blueprint.route('/<username>/bookings', methods=['GET', 'POST'])
 def user_booking(username):
-    db, cursor = get_db()
 
-    username = session.get('username')
-    name = session.get('name')
-    today_str = datetime.now().strftime('%d/%m/%Y')
+    if session.get('user_type') == 'regular':
+        db, cursor = get_db()
 
-    cursor.execute("SELECT * FROM booking WHERE userID = ? AND status == 'Booked' AND date >= ? ORDER BY date ASC", (username,today_str))
-    bookings = cursor.fetchall()
+        username = session.get('username')
+        name = session.get('name')
+        today_str = datetime.now().strftime('%d/%m/%Y')
 
-    close_db(None)
-    return render_template('user_bookings.html', username=username, bookings=bookings, name=name)
+        cursor.execute("SELECT * FROM booking WHERE userID = ? AND status == 'Booked' AND date >= ? ORDER BY date ASC", (username,today_str))
+        bookings = cursor.fetchall()
+
+        close_db(None)
+        return render_template('user_bookings.html', username=username, bookings=bookings, name=name)
+    
+    else:
+        return render_template('not_authorised.html')
+ 
 
 # Route for cancelling room bookings
 @home_blueprint.route('/cancel_rooms', methods=['GET', 'POST'])

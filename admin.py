@@ -256,7 +256,6 @@ def change_to_admin():
     db.execute(insert_admin_query, ( user_data[5], user_data[1],user_data[4],'Active'))
     db.commit()
 
-    return 'User deleted successfully!'
 
 # Route for viewing users by admin
 @admin_blueprint.route('/admin/view_users', methods=['GET', 'POST'])

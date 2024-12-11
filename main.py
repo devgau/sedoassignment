@@ -32,6 +32,7 @@ def index():
 @app.route('/login', methods=['GET', 'POST'])
 # @login_required
 def login():
+    session['user_type'] = ''
 
     conn = sqlite3.connect('assignmentdb.db')
     cursor = conn.cursor()
