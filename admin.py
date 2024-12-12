@@ -35,6 +35,7 @@ def bookings():
         logger.info(f"Admin {session.get('username')} viewed bookings.")
         return render_template('admin_booking.html', bookings=current_bookings)
     else:
+        logger.info(f"User {session.get('username')} tried to access a restricted page")
         return render_template('not_authorised.html')
 
 # Route for admin homepage
@@ -77,6 +78,7 @@ def admin_home():
 
         return render_template('admin.html', bookings=bookings_display, bookings_per_month=bookings_per_month, rooms_distribution= rooms_distribution)
     else:
+        logger.info(f"User {session.get('username')} tried to access a restricted page")
         return render_template('not_authorised.html')
 
 
@@ -109,6 +111,7 @@ def view_rooms():
         logger.info(f"Admin {session.get('username')} viewed rooms gallery")
         return render_template('gallery.html', rooms=updated_rooms, user_type=user_type, folder_dict=folder_dict_json)
     else:
+        logger.info(f"User {session.get('username')} tried to access a restricted page")
         return render_template('not_authorised.html')
 
 # Route for adding rooms by admin
@@ -150,6 +153,7 @@ def add_rooms():
             logger.error(f"Admin {session.get('user_name')} failed to add room '{room_name}': {str(e)}")
             return redirect(url_for('admin.view_rooms',room_add = room_add))
     else:
+        logger.info(f"User {session.get('username')} tried to access a restricted page")
         return render_template('not_authorised.html')
 
 # Route for deleting rooms by admin    

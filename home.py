@@ -44,9 +44,10 @@ def room_gallery():
 
         image_folder = os.path.join(current_app.root_path, 'static') + '/images/'
         image_filenames = [f for f in os.listdir(image_folder) if f.endswith(('.png', '.jpg', '.jpeg'))]
-
+        logger.info(f"User {username} viewed the room gallery.")
         return render_template('gallery.html', rooms=updated_rooms, username=username, user_type=user_type, image_filenames=image_filenames, image_folder=image_folder)
     else:
+        logger.info(f"User {session.get('username')} tried to access a restricted page")
         return render_template('not_authorised.html')
  
 # Route for viewing individual rooms
@@ -57,8 +58,10 @@ def viewing_rooms(room_name):
         image_folder = os.path.join(current_app.root_path, 'static')+'/images/' +str(room_name)
         image_filenames = [f for f in os.listdir(image_folder) if f.endswith(('.png', '.jpg', '.jpeg'))]
         slide_range = range(1, len(image_filenames) + 1)
+        logger.info(f"User {session.get('username')} viewed the room '{room_name}'.")
         return render_template('viewing.html', image_filenames=image_filenames,image_folder=image_folder, room_name = room_name, slide_range=slide_range, user_type = user_type)
     else:
+        logger.info(f"User {session.get('username')} tried to access a restricted page")
         return render_template('not_authorised.html')
  
 
@@ -83,11 +86,13 @@ def submit_room():
             """.format(), (room_name,username,date, time, attendance, equipment, status))
         
         db.commit()
+        logger.info(f"User {username} successfully booked room '{room_name}' for {date}.")
         message = f"alert('Booking Successful');"
         return f"<script>{message} window.location.href = '{url_for('home.user_booking', username=username)}';</script>"
     
     except Exception as e:
         current_app.logger.info('Couldnt book room')
+        logger.error(f"User {session.get('username')} failed to book room '{room_name}': {str(e)}")
 
 
 # Route for displaying user bookings
@@ -105,9 +110,11 @@ def user_booking(username):
         bookings = cursor.fetchall()
 
         close_db(None)
+        logger.info(f"User {username} viewed their bookings.")
         return render_template('user_bookings.html', username=username, bookings=bookings, name=name)
     
     else:
+        logger.info(f"User {session.get('username')} tried to access a restricted page")
         return render_template('not_authorised.html')
  
 
@@ -121,10 +128,11 @@ def cancel_booking():
     try:
         cursor.execute("UPDATE booking SET status = '{}' WHERE bookingID = ?".format(cancellation_reason), (booking_id,))
         db.commit()
-        logger.info(f"{user_type} cancelled booking '{booking_id}'")
+        logger.info(f"{session.get('username')} cancelled booking '{booking_id}'")
 
     except:
-        current_app.logger.info('Couldnt delete')
+
+        logger.info(f"Error deleting booking '{booking_id}' by {session.get('username')}")
     return redirect(url_for('home.user_booking', username=session.get('username')))
 
 # Route for updating room bookings
@@ -146,8 +154,9 @@ def update_booking():
             WHERE bookingID = ?
         """, (date, time, attendance, equipment, booking_id))
         db.commit()
+        logger.info(f"User {session.get('username')} updated booking '{booking_id}'.")
 
     except:
-        current_app.logger.info('Couldnt update')
+        logger.info(f"Error updating booking '{booking_id}' by {session.get('username')}")
 
     return redirect(url_for('home.user_booking', username=session.get('username')))
