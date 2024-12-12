@@ -82,16 +82,17 @@ def login():
         if user_type == 'admin':
 
             try:
-                cursor.execute('SELECT password FROM admin WHERE email = ? and status = "Active"', (emailaddress,))
+                cursor.execute('SELECT password, adminID FROM admin WHERE email = ? and status = "Active"', (emailaddress,))
                 result = cursor.fetchone()
                 if result:
                     hashed_password = result[0]
                     if check_password_hash(hashed_password, password):
                         flash('Login successful!', 'success')  
                         session['user_type'] = 'admin'
-                        session['username'] = result[0]
+                        session['username'] = result[1]
                         session['logged_in'] = True
-                        logger.info(f'Admin login successful: {emailaddress} (Admin ID: {result[0]})')
+                        logger.info(f'Admin login successful: {emailaddress} (Admin ID: {result[1]})')
+
                         return redirect(url_for('admin.admin_home'))
                     else:
                         flash('Invalid username or password', 'error')  

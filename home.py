@@ -10,7 +10,7 @@ import json
 
 
 home_blueprint = Blueprint('home', __name__)
-logger_file = logging.getLogger("error.log")
+logger = logging.getLogger('home')
 
 # Function to establish database connection
 def get_db():
@@ -121,6 +121,7 @@ def cancel_booking():
     try:
         cursor.execute("UPDATE booking SET status = '{}' WHERE bookingID = ?".format(cancellation_reason), (booking_id,))
         db.commit()
+        logger.info(f"{user_type} cancelled booking '{booking_id}'")
 
     except:
         current_app.logger.info('Couldnt delete')

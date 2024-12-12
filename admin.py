@@ -8,8 +8,19 @@ from home import get_db
 from datetime import datetime, timedelta
 import json
 import pandas as pd
+import logging
 
 admin_blueprint = Blueprint('admin', __name__)
+
+# logging.basicConfig(level=logging.INFO,
+#                     format='%(asctime)s - %(message)s',
+#                     filename='adminauditlog.log',
+#                     filemode='w')
+
+# logger = logging.getLogger()
+# logging.getLogger('werkzeug').setLevel(logging.ERROR)
+
+logger = logging.getLogger('admin')
 
 # Route for displaying all bookings to admin
 @admin_blueprint.route('/admin/bookings', methods=['GET', 'POST'])
@@ -21,6 +32,7 @@ def bookings():
 
         cursor.execute("SELECT * FROM booking ORDER BY date DESC")
         current_bookings = cursor.fetchall()
+        logger.info(f"Admin {session.get('username')} viewed bookings.")
         return render_template('admin_booking.html', bookings=current_bookings)
     else:
         return render_template('not_authorised.html')
@@ -61,6 +73,7 @@ def admin_home():
         
         bookings_per_month = json.dumps(bookings_per_month_dict)
         rooms_distribution = json.dumps(rooms_distribution)
+        logger.info(f"Admin {session.get('username')} viewed dashboard stats on {today_str}")
 
         return render_template('admin.html', bookings=bookings_display, bookings_per_month=bookings_per_month, rooms_distribution= rooms_distribution)
     else:
@@ -93,6 +106,7 @@ def view_rooms():
             updated_rooms.append(updated_room)
         
         folder_dict_json = json.dumps(folder_dict)
+        logger.info(f"Admin {session.get('username')} viewed rooms gallery")
         return render_template('gallery.html', rooms=updated_rooms, user_type=user_type, folder_dict=folder_dict_json)
     else:
         return render_template('not_authorised.html')
@@ -126,12 +140,14 @@ def add_rooms():
                 VALUES (?, ?, ?, ?,?,?)
             """, (room_name, building, occupancy, sqlite3.Binary(image_data), available, video_conferencing))
             db.commit()
+            logger.info(f"Admin {session.get('username')} added room '{room_name}'")
             current_app.logger.info('Room added')
             room_add = 'true'
             return render_template('gallery.html', room_add=room_add)
         
-        except:
+        except Exception as e:
             room_add  = 'false'
+            logger.error(f"Admin {session.get('user_name')} failed to add room '{room_name}': {str(e)}")
             return redirect(url_for('admin.view_rooms',room_add = room_add))
     else:
         return render_template('not_authorised.html')
@@ -146,12 +162,44 @@ def delete_room():
         cursor.execute("DELETE FROM rooms WHERE Name=?", (room_name,))
         db.commit()
         shutil.rmtree(delete_folder)
+        logger.info(f"Admin {session.get('username')} deleted room '{room_name}'")
         return 'Room deleted successfully!'
-    except:
+    except Exception as e:
+        logger.error(f"Admin {session.get('username')} failed to delete room '{room_name}': {str(e)}")
         return 'Unable to delete room'
     
 
-# Route for updating rooms by admin
+# # Route for updating rooms by admin
+# @admin_blueprint.route('/admin/update_room', methods=['GET', 'POST'])
+# def update_room():
+#     try:
+#         room_name = request.form.get('roomName')
+#         new_room_value = room_name
+#         building = request.form.get('building')
+#         occupancy = request.form.get('occupancy')
+#         main_image = request.form.get('displayImage')
+    
+#         image_data = main_image.read()
+#         availability = request.form.get('availability')
+#         video_conferencing = request.form.get('videoConferencing')
+
+#         db, cursor = get_db()
+
+#         if main_image == 'undefined':
+#             cursor.execute("UPDATE rooms SET Building = ? , Seats = ? ,  Available = ?, Video_Conferencing = ? WHERE Name = ?", (building, occupancy,availability,video_conferencing, room_name,))
+#             db.commit()
+
+#         elif main_image != 'undefined':
+#             cursor.execute("UPDATE rooms Building = ?, Seats = ?, Images = ?, Available = ?, Video_Conferencing = ? WHERE Name = ?", (building, occupancy, sqlite3.Binary(image_data),availability,video_conferencing, room_name))
+#             db.commit()
+#         logger.info(f"Admin {session.get('username')} updated room '{room_name}'")
+#         return render_template('message.html', message='Room updated successfully!')
+    
+#     except Exception as e:
+#         logger.error(f"Admin {session.get('username')} failed to update room '{room_name}': {str(e)}")
+#         return render_template('message.html', message='Couldnt update the room')
+
+
 @admin_blueprint.route('/admin/update_room', methods=['GET', 'POST'])
 def update_room():
     try:
@@ -159,26 +207,39 @@ def update_room():
         new_room_value = room_name
         building = request.form.get('building')
         occupancy = request.form.get('occupancy')
-        main_image = request.form.get('displayImage')
-    
-        image_data = main_image.read()
         availability = request.form.get('availability')
         video_conferencing = request.form.get('videoConferencing')
 
+        # Get the uploaded file from request.files
+        main_image = request.files.get('displayImage')
+
+        # Check if an image was uploaded
+        if main_image and main_image.filename != '':
+            image_data = main_image.read()
+        else:
+            image_data = None
+
         db, cursor = get_db()
 
-        if main_image == 'undefined':
-            cursor.execute("UPDATE rooms SET Building = ? , Seats = ? ,  Available = ?, Video_Conferencing = ? WHERE Name = ?", (building, occupancy,availability,video_conferencing, room_name,))
+        # If no image is uploaded (or the image is 'undefined')
+        if image_data is None:
+            cursor.execute("UPDATE rooms SET Building = ?, Seats = ?, Available = ?, Video_Conferencing = ? WHERE Name = ?", 
+                           (building, occupancy, availability, video_conferencing, room_name))
             db.commit()
 
-        elif main_image != 'undefined':
-            cursor.execute("UPDATE rooms Building = ?, Seats = ?, Images = ?, Available = ?, Video_Conferencing = ? WHERE Name = ?", (building, occupancy, sqlite3.Binary(image_data),availability,video_conferencing, room_name))
+        # If an image is uploaded
+        else:
+            cursor.execute("UPDATE rooms SET Building = ?, Seats = ?, Images = ?, Available = ?, Video_Conferencing = ? WHERE Name = ?", 
+                           (building, occupancy, sqlite3.Binary(image_data), availability, video_conferencing, room_name))
             db.commit()
-        
+
+        logger.info(f"Admin {session.get('username')} updated room '{room_name}'")
         return render_template('message.html', message='Room updated successfully!')
-    
-    except:
-        return render_template('message.html', message='Couldnt update the room')
+
+    except Exception as e:
+        logger.error(f"Admin {session.get('username')} failed to update room '{room_name}': {str(e)}")
+        return render_template('message.html', message='Could not update the room')
+
 
 # Route for deleting a user by admin  
 @admin_blueprint.route('/delete_user', methods=['GET', 'POST'])
@@ -202,8 +263,11 @@ def delete_user():
                     WHERE adminID = ?
                 """, (userID,))
             db.commit()
+
+        logger.info(f"Admin {session.get('username')} deleted user with ID '{userID}' of type '{user_type}'")
         return render_template('message.html', message='User deleted successfully!')
-    except:
+    except Exception as e:
+        logger.error(f"Admin {session.get('username')} failed to delete user with ID '{userID}': {str(e)}")
         return render_template('message.html', message="Couldn't delete the user")
 
     
@@ -232,8 +296,10 @@ def update_user():
                     WHERE adminID = ?
                 """.format(usertype), (name, email, status, user_id,))
             db.commit()
+        logger.info(f"Admin {session.get('username')} updated user {user_id}'s details")
         return render_template('message.html', message='User updated successfully!')
-    except:
+    except Exception as e:
+        logger.error(f"Admin {session.get('username')} failed to update user with ID '{user_id}': {str(e)}")
         return render_template('message.html', message="Couldn't update the user")
 
 
@@ -255,6 +321,8 @@ def change_to_admin():
     insert_admin_query = "INSERT INTO admin (email, password, name, status) VALUES (?, ?, ?,?)"
     db.execute(insert_admin_query, ( user_data[5], user_data[1],user_data[4],'Active'))
     db.commit()
+    logger.info(f"Admin {session.get('username')} changed user '{userID}' to admin")
+
 
 
 # Route for viewing users by admin
@@ -266,6 +334,7 @@ def view_users():
 
     cursor.execute("SELECT adminID,name, email, status  FROM admin")
     admins = cursor.fetchall()
+    logger.info(f"Admin {session.get('username')} viewed users")
     return render_template('users.html', users=users, admins=admins)
 
 # Route for updating a booking by admin
@@ -282,7 +351,6 @@ def update_booking():
     equipment = data.get('equipment')
     status = data.get('status')
 
-
     try:
         cursor.execute("""
             UPDATE booking
@@ -290,7 +358,9 @@ def update_booking():
             WHERE bookingID = ?
         """, (name, user, date, time, attendance, equipment, status, booking_id))
         db.commit()
+        logger.info(f"Admin {session.get('username')} updated booking '{booking_id}'")
         return 'Updated booking'
 
-    except:
+    except Exception as e:
+        logger.error(f"Admin {session.get('username')} failed to update booking '{booking_id}': {str(e)}")
         current_app.logger.info('Couldnt update booking')
