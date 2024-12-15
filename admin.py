@@ -134,12 +134,6 @@ def add_rooms():
         image_file = request.files['images']
         image_data = image_file.read()
 
-        # kind = filetype.guess(image_file.stream)
-        # if not kind or kind.mime not in ['image/jpeg', 'image/png', 'image/gif', 'image/bmp']:
-        #     room_add  = 'false'
-        #     logger.error('Invalid file type for the main image. Allowed types are .jpg, .jpeg, .png, .gif, .bmp')
-        #     return redirect(url_for('admin.view_rooms',room_add = room_add))
-
         valid, error_message = validate_image_files([image_file])
         if not valid:
             room_add = 'false'
