@@ -31,10 +31,6 @@ safetensors==0.4.5
 setuptools==70.2.0
 six==1.16.0
 sympy==1.13.1
-tokenizers==0.20.3
-torch==2.6.0.dev20241106
-torchaudio==2.5.0.dev20241106
-torchvision==0.20.0.dev20241106
 tqdm==4.67.0
 transformers==4.46.2
 typing_extensions==4.12.2
