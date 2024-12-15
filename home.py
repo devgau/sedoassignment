@@ -53,17 +53,12 @@ def room_gallery():
 # Route for viewing individual rooms
 @home_blueprint.route('/rooms/<room_name>', methods=['GET', 'POST'])
 def viewing_rooms(room_name):
-    if session.get('user_type') == 'regular':
-        user_type = request.args.get('user_type')
-        image_folder = os.path.join(current_app.root_path, 'static')+'/images/' +str(room_name)
-        image_filenames = [f for f in os.listdir(image_folder) if f.endswith(('.png', '.jpg', '.jpeg'))]
-        slide_range = range(1, len(image_filenames) + 1)
-        logger.info(f"User {session.get('username')} viewed the room '{room_name}'.")
-        return render_template('viewing.html', image_filenames=image_filenames,image_folder=image_folder, room_name = room_name, slide_range=slide_range, user_type = user_type)
-    else:
-        logger.info(f"User {session.get('username')} tried to access a restricted page")
-        return render_template('not_authorised.html')
- 
+    user_type = request.args.get('user_type')
+    image_folder = os.path.join(current_app.root_path, 'static')+'/images/' +str(room_name)
+    image_filenames = [f for f in os.listdir(image_folder) if f.endswith(('.png', '.jpg', '.jpeg'))]
+    slide_range = range(1, len(image_filenames) + 1)
+    logger.info(f"{session.get('user_type')} {session.get('username')} viewed the room '{room_name}'.")
+    return render_template('viewing.html', image_filenames=image_filenames,image_folder=image_folder, room_name = room_name, slide_range=slide_range, user_type = user_type)
 
 # Route for submitting room booking
 @home_blueprint.route('/book_room', methods=['POST'])

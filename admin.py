@@ -9,18 +9,21 @@ from datetime import datetime, timedelta
 import json
 import pandas as pd
 import logging
+import filetype
 
 admin_blueprint = Blueprint('admin', __name__)
 
-# logging.basicConfig(level=logging.INFO,
-#                     format='%(asctime)s - %(message)s',
-#                     filename='adminauditlog.log',
-#                     filemode='w')
-
-# logger = logging.getLogger()
-# logging.getLogger('werkzeug').setLevel(logging.ERROR)
-
 logger = logging.getLogger('admin')
+
+def validate_image_files(files):
+    allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp']
+    
+    for file in files:
+        kind = filetype.guess(file.stream)
+        if not kind or kind.mime not in allowed_types:
+            return False, f"Invalid file type for image '{file.filename}'. Allowed types are .jpg, .jpeg, .png, .gif, .bmp"
+    
+    return True, None
 
 # Route for displaying all bookings to admin
 @admin_blueprint.route('/admin/bookings', methods=['GET', 'POST'])
@@ -130,7 +133,27 @@ def add_rooms():
             video_conferencing = 'Yes'
         image_file = request.files['images']
         image_data = image_file.read()
+
+        # kind = filetype.guess(image_file.stream)
+        # if not kind or kind.mime not in ['image/jpeg', 'image/png', 'image/gif', 'image/bmp']:
+        #     room_add  = 'false'
+        #     logger.error('Invalid file type for the main image. Allowed types are .jpg, .jpeg, .png, .gif, .bmp')
+        #     return redirect(url_for('admin.view_rooms',room_add = room_add))
+
+        valid, error_message = validate_image_files([image_file])
+        if not valid:
+            room_add = 'false'
+            logger.error(error_message)
+            return redirect(url_for('admin.view_rooms', room_add=room_add))
+
         slideshow_images = request.files.getlist('slideshow_images')
+
+        valid, error_message = validate_image_files(slideshow_images)
+        if not valid:
+            room_add = 'false'
+            logger.error(error_message)
+            return redirect(url_for('admin.view_rooms', room_add=room_add))
+
         UPLOAD_FOLDER = 'static/images/'+str(room_name)
 
         try:
@@ -172,38 +195,6 @@ def delete_room():
         logger.error(f"Admin {session.get('username')} failed to delete room '{room_name}': {str(e)}")
         return 'Unable to delete room'
     
-
-# # Route for updating rooms by admin
-# @admin_blueprint.route('/admin/update_room', methods=['GET', 'POST'])
-# def update_room():
-#     try:
-#         room_name = request.form.get('roomName')
-#         new_room_value = room_name
-#         building = request.form.get('building')
-#         occupancy = request.form.get('occupancy')
-#         main_image = request.form.get('displayImage')
-    
-#         image_data = main_image.read()
-#         availability = request.form.get('availability')
-#         video_conferencing = request.form.get('videoConferencing')
-
-#         db, cursor = get_db()
-
-#         if main_image == 'undefined':
-#             cursor.execute("UPDATE rooms SET Building = ? , Seats = ? ,  Available = ?, Video_Conferencing = ? WHERE Name = ?", (building, occupancy,availability,video_conferencing, room_name,))
-#             db.commit()
-
-#         elif main_image != 'undefined':
-#             cursor.execute("UPDATE rooms Building = ?, Seats = ?, Images = ?, Available = ?, Video_Conferencing = ? WHERE Name = ?", (building, occupancy, sqlite3.Binary(image_data),availability,video_conferencing, room_name))
-#             db.commit()
-#         logger.info(f"Admin {session.get('username')} updated room '{room_name}'")
-#         return render_template('message.html', message='Room updated successfully!')
-    
-#     except Exception as e:
-#         logger.error(f"Admin {session.get('username')} failed to update room '{room_name}': {str(e)}")
-#         return render_template('message.html', message='Couldnt update the room')
-
-
 @admin_blueprint.route('/admin/update_room', methods=['GET', 'POST'])
 def update_room():
     try:
@@ -214,24 +205,22 @@ def update_room():
         availability = request.form.get('availability')
         video_conferencing = request.form.get('videoConferencing')
 
-        # Get the uploaded file from request.files
         main_image = request.files.get('displayImage')
 
-        # Check if an image was uploaded
         if main_image and main_image.filename != '':
             image_data = main_image.read()
+            valid, error_message = validate_image_files([main_image])
+            if not valid:
+                logger.error(error_message)
+                return render_template('message.html', message='Could not update the room')
         else:
             image_data = None
 
         db, cursor = get_db()
-
-        # If no image is uploaded (or the image is 'undefined')
         if image_data is None:
             cursor.execute("UPDATE rooms SET Building = ?, Seats = ?, Available = ?, Video_Conferencing = ? WHERE Name = ?", 
                            (building, occupancy, availability, video_conferencing, room_name))
             db.commit()
-
-        # If an image is uploaded
         else:
             cursor.execute("UPDATE rooms SET Building = ?, Seats = ?, Images = ?, Available = ?, Video_Conferencing = ? WHERE Name = ?", 
                            (building, occupancy, sqlite3.Binary(image_data), availability, video_conferencing, room_name))
