@@ -161,7 +161,6 @@ def add_rooms():
             """, (room_name, building, occupancy, sqlite3.Binary(image_data), available, video_conferencing))
             db.commit()
             logger.info(f"Admin {session.get('username')} added room '{room_name}'")
-            current_app.logger.info('Room added')
             room_add = 'true'
             return render_template('gallery.html', room_add=room_add)
         
@@ -309,6 +308,8 @@ def change_to_admin():
     db.execute(insert_admin_query, ( user_data[5], user_data[1],user_data[4],'Active'))
     db.commit()
     logger.info(f"Admin {session.get('username')} changed user '{userID}' to admin")
+
+    return 'User moved to admin!'
 
 
 
