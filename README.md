@@ -64,8 +64,8 @@ The application is a room booking tool, which can be used by employees and stake
 ## User Credentials
 
 ### Regular Users
-| Username            | Password  | Security Question                | Security Answer |
-|---------------------|-----------|-----------------------------------|-----------------|
+| Username            | Password  | Recovery Question                | Recovery Answer |
+|---------------------|-----------|----------------------------------|-----------------|
 | user1@email.com     | User1pw!  | What is your favourite food?     | Pizza           |
 | user2@email.com     | User2pw!  | What is your favourite food?     | Pizza           |
 | user3@email.com     | User3pw!  | What is your favourite food?     | Pizza           |
