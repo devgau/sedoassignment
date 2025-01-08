@@ -6,9 +6,11 @@ from home import home_blueprint, room_gallery, get_db
 from admin import admin_blueprint,admin_home
 import logging
 import sqlite3
+import re
 
 # Create a Flask application instance
 app = Flask(__name__, static_folder='static\\')
+# app.config['TESTING'] = True
 app.secret_key = 'strong_key'
 app.register_blueprint(home_blueprint)
 app.register_blueprint(admin_blueprint)
@@ -129,6 +131,12 @@ def signup():
         recovery_question = request.form['security_question']
         recovery_answer = request.form['security_answer']
         status = 'Active'
+
+        # # Password Validation Logic
+        # valid, error = validate_password(password)
+        # if not valid:
+        #     flash(error, 'error')
+        #     return render_template('login.html', security_questions=security_questions)
 
         cursor.execute('SELECT email FROM user WHERE email = ?', (email,))
         existing_user = cursor.fetchone()
