@@ -75,6 +75,4 @@ The application is a room booking tool, which can be used by employees and stake
 |---------------------|-----------|
 | admin1@email.com    | 1         |
 
-
-    
-
+**Normally, credentials wouldn't be shared in a public repository or README file for security reasons. However, due to the specific requirements of this assignment, credentials are provided here for demonstration purposes only.**  
