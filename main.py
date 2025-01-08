@@ -6,7 +6,6 @@ from home import home_blueprint, room_gallery, get_db
 from admin import admin_blueprint,admin_home
 import logging
 import sqlite3
-import re
 
 # Create a Flask application instance
 app = Flask(__name__, static_folder='static\\')
