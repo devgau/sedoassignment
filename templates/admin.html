@@ -96,8 +96,8 @@
 </style>
 </head>
 
-
 <script>
+
     document.addEventListener('DOMContentLoaded', function () {
         var ctx = document.getElementById('bookingsChart').getContext('2d');
         var chartDataString = '{{ bookings_per_month | replace("\'", "\\\'") | safe }}';

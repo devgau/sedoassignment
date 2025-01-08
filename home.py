@@ -10,6 +10,8 @@ import json
 
 
 home_blueprint = Blueprint('home', __name__)
+
+# Initialize logger for the regular users
 logger = logging.getLogger('home')
 
 # Function to establish database connection
@@ -74,7 +76,7 @@ def submit_room():
         attendance = request.form['attendance']
         equipment = request.form['equipment'] or None
         status = 'Booked'
-
+        # Using parameterised queries to prevent sql injection
         cursor.execute("""
                 INSERT INTO booking (room_name, userID, date, time, attendance, equipment, status)
                 VALUES (?,?, ?, ?, ?, ?, ?)
@@ -100,7 +102,7 @@ def user_booking(username):
         username = session.get('username')
         name = session.get('name')
         today_str = datetime.now().strftime('%d/%m/%Y')
-
+        # Using parameterised queries to prevent sql injection
         cursor.execute("SELECT * FROM booking WHERE userID = ? AND status == 'Booked' AND date >= ? ORDER BY date ASC", (username,today_str))
         bookings = cursor.fetchall()
 

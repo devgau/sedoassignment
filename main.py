@@ -13,6 +13,8 @@ app.secret_key = 'strong_key'
 app.register_blueprint(home_blueprint)
 app.register_blueprint(admin_blueprint)
 
+
+# Configure logging to track application events
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(message)s',
                     filename='auditlog.log',
@@ -39,6 +41,7 @@ def index():
 @app.route('/login', methods=['GET', 'POST'])
 # @login_required
 def login():
+    # Reset the user_type session
     session['user_type'] = ''
 
     conn = sqlite3.connect('assignmentdb.db')
@@ -52,6 +55,7 @@ def login():
         if user_type == 'user':
 
             try:
+                # Using parameterised queries to prevent sql injection
                 cursor.execute('SELECT userID,password,name FROM user WHERE email = ? and status = "Active"', (emailaddress,))
                 result = cursor.fetchone()
                 if result:
@@ -75,6 +79,7 @@ def login():
                     return redirect(url_for('login'))
                 
             except Exception as e:
+                # Log errors during the login process
                 logger.error(f'Error during login attempt for user: {emailaddress}. Error: {str(e)}')
                 return redirect(url_for('login'))
 
@@ -104,6 +109,7 @@ def login():
                     return redirect(url_for('login'))
                 
             except Exception as e:
+                # Log errors during the login process
                 logger.error(f'Error during admin login attempt for user: {emailaddress}. Error: {str(e)}')
                 return redirect(url_for('login'))
 

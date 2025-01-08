@@ -13,8 +13,10 @@ import filetype
 
 admin_blueprint = Blueprint('admin', __name__)
 
+# Set up logging for admins
 logger = logging.getLogger('admin')
 
+# Function to validate image file types
 def validate_image_files(files):
     allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp']
     
@@ -38,6 +40,7 @@ def bookings():
         logger.info(f"Admin {session.get('username')} viewed bookings.")
         return render_template('admin_booking.html', bookings=current_bookings)
     else:
+        # Logs and redirects the user to not_authorised.html
         logger.info(f"User {session.get('username')} tried to access a restricted page")
         return render_template('not_authorised.html')
 
@@ -81,9 +84,9 @@ def admin_home():
 
         return render_template('admin.html', bookings=bookings_display, bookings_per_month=bookings_per_month, rooms_distribution= rooms_distribution)
     else:
+        # Logs and redirects the user to not_authorised.html
         logger.info(f"User {session.get('username')} tried to access a restricted page")
         return render_template('not_authorised.html')
-
 
 # Route for viewing rooms by admin
 @admin_blueprint.route('/admin/view_rooms', methods=['GET', 'POST'])
@@ -155,6 +158,7 @@ def add_rooms():
             for slideshow_image in slideshow_images:
                     slideshow_image_filename = secure_filename(slideshow_image.filename)
                     slideshow_image.save(os.path.join(UPLOAD_FOLDER, slideshow_image_filename))
+            # Using parameterised queries to prevent sql injection
             cursor.execute("""
                 INSERT INTO rooms (Name,Building, Seats, Images, Available, Video_Conferencing)
                 VALUES (?, ?, ?, ?,?,?)
@@ -179,6 +183,7 @@ def delete_room():
         room_name = request.args.get('room_name')
         delete_folder = 'static/images/'+str(room_name)
         db, cursor = get_db()
+        # Using parameterised queries to prevent sql injection
         cursor.execute("DELETE FROM rooms WHERE Name=?", (room_name,))
         db.commit()
         shutil.rmtree(delete_folder)
@@ -211,6 +216,7 @@ def update_room():
 
         db, cursor = get_db()
         if image_data is None:
+            # Using parameterised queries to prevent sql injection
             cursor.execute("UPDATE rooms SET Building = ?, Seats = ?, Available = ?, Video_Conferencing = ? WHERE Name = ?", 
                            (building, occupancy, availability, video_conferencing, room_name))
             db.commit()
