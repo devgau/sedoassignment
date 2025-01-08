@@ -1,0 +1,16 @@
+Github link - https://github.com/devgau/sedoassignment
+Render link - https://room-booking-tool.onrender.com
+
+## User Credentials
+
+### Regular Users
+| Username            | Password  | Security Question                | Security Answer |
+|---------------------|-----------|-----------------------------------|-----------------|
+| User1@email.com     | User1pw!  | What is your favourite food?     | Pizza           |
+| User2@email.com     | User2pw!  | What is your favourite food?     | Pizza           |
+| User3@email.com     | User3pw!  | What is your favourite food?     | Pizza           |
+
+### Admin Users
+| Username            | Password  |
+|---------------------|-----------|
+| admin1@email.com    | 1         |
