@@ -37,7 +37,6 @@ The application is a room booking tool, which can be used by employees and stake
     ```bash
     flask run
 
-
 ## Installation Guide to Run Locally (Windows)
 
 1. **Clone the Repository**  
@@ -62,6 +61,20 @@ The application is a room booking tool, which can be used by employees and stake
    ```cmd
    flask run
    ```
+
+## User Credentials
+
+### Regular Users
+| Username            | Password  | Security Question                | Security Answer |
+|---------------------|-----------|-----------------------------------|-----------------|
+| User1@email.com     | User1pw!  | What is your favourite food?     | Pizza           |
+| User2@email.com     | User2pw!  | What is your favourite food?     | Pizza           |
+| User3@email.com     | User3pw!  | What is your favourite food?     | Pizza           |
+
+### Admin Users
+| Username            | Password  |
+|---------------------|-----------|
+| admin1@email.com    | 1         |
 
 
     
